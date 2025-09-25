@@ -1,21 +1,11 @@
-``
-``
-
-Remember to set innodb buffer pool size low to reduce memory consumption
-
 This playbook is based on:
 https://github.com/ansible/ansible-examples/tree/master/lamp_simple_rhel7
 
-``
-docker run --rm --privileged -p 5000:80 -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name=lamp-1 -
--network ansible -d gcr.io/kodekloud/centos-ssh-enabled:stbase
-``
-
-Remember to set innodb buffer pool size low to reduce memory consumption
+Remember to set innodb buffer pool size low to reduce memory consumption if required
 
 ## Tasks:
 
-#### Common
+#### Common Task
 1. Install Dependencies: python3-libselinux, python3-libsemanage, firewalld
 
 #### DB Tasks
