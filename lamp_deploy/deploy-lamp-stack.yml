@@ -1,0 +1,123 @@
+---
+- name: Deploy lamp stack application
+  hosts: all
+  become: true
+  tasks:
+  - name: Install common dependencies
+    yum:
+      name:
+      - python3-libselinux
+      - python3-libsemanage
+      - firewalld
+      state: installed
+
+- name: Configure MariaDB on lamp-db
+  hosts: lamp-db
+  become: true
+  tasks:
+  - name: Install mariadb-server and python3-mysqlclient
+    yum:
+      name:
+      - mariadb-server
+      - python3-mysqlclient
+      state: installed
+
+  - name: Copy MySQL Configuration file to host
+    copy:
+      src: files/my.cnf
+      dest: /etc/my.cnf
+
+  - name: Start and enable mariadb service
+    service:
+      name: mariadb
+      state: started
+      enabled: true
+
+  - name: Start and enable firewalld service
+    service:
+      name: firewalld
+      state: started
+      enabled: true
+
+  - name: Create a firewall rule to enable mysql_port
+    firewalld:
+      port: "{{ mysql_port }}/tcp"
+      zone: public
+      state: enabled
+      immediate: yes
+      permanent: yes
+
+  - name: Create Application Database
+    mysql_db:
+      name="{{ dbname }}"
+      state=present
+
+  - name: Create Application DB User
+    mysql_user:
+      name="{{ dbuser }}"
+      password="{{ dbpassword }}"
+      priv=*.*:ALL
+      host='192.168.56.13'
+      state=present
+
+  - name: Move db-load-script to db host
+    copy:
+      src: files/db-load-script.sql
+      dest: /tmp/db-load-script.sql
+
+  - name: Load Inventory Data
+    shell: mysql -f < /tmp/db-load-script.sql
+
+- name: Install and configure dependencies on lamp-web
+  hosts: lamp-web
+  become: yes
+  tasks:
+  - name: Install httpd and php
+    yum:
+      name:
+      - httpd
+      - php
+      - php-mysqlnd
+      state: present
+
+  - name: Install web role specific dependencies (git)
+    yum:
+      name=git
+      state=installed
+
+  - name: Start firewalld service
+    service:
+      name=firewalld
+      state=started
+      enabled=yes
+
+  - name: Insert firewalld rule for httpd
+    firewalld:
+      port="{{ httpd_port }}/tcp"
+      permanent=true
+      state=enabled
+      immediate=yes
+
+  - name: Set index.php as the default page
+    tags: "Set index.php as the default page"
+    replace:
+      path: /etc/httpd/conf/httpd.conf
+      regexp: 'DirectoryIndex index.html'
+      replace: 'DirectoryIndex index.php'
+
+  - name: Start and enable httpd service
+    service:
+      name=httpd
+      state=started
+      enabled=yes
+
+  - name: Copy the code from repository
+    git:
+      repo="{{ repository }}"
+      dest=/var/www/html/
+      force=yes
+
+  - name: Creates the index.php file
+    copy:
+      src=files/index.php
+      dest=/var/www/html/index.php
