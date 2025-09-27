@@ -1,6 +1,6 @@
 # Inventory File
 [db_servers]
-lamp-db ansible_host=192.168.56.13 ansible_user=maria ansible_ssh_private_key_file=/home/vagrant/.ssh/maria mysqlservice=mysqld mysql_port=3306 dbname=ecomdb dbuser=ecomuser dbpassword=ecompassword
+lamp-db ansible_host=192.168.56.13 ansible_user=vagrant ansible_ssh_private_key_file=/home/vagrant/.ssh/lampdb mysqlservice=mysqld mysql_port=3306 dbname=ecomdb dbuser=ecomuser dbpassword=ecompassword
 
 [web_servers]
-lamp-web ansible_host=192.168.56.12 ansible_user=john ansible_ssh_private_key_file=/home/vagrant/.ssh/john httpd_port=80 repository=https://github.com/kodekloudhub/learning-app-ecommerce.git
+lamp-web ansible_host=192.168.56.12 ansible_user=vagrant ansible_ssh_private_key_file=/home/vagrant/.ssh/lampweb httpd_port=80 repository=https://github.com/kodekloudhub/learning-app-ecommerce.git
