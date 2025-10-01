@@ -1,0 +1,52 @@
+- name: Install mariadb-server and python3-mysqlclient
+  yum:
+    name:
+    - mariadb-server
+    - python3-mysqlclient
+    state: installed
+
+- name: Copy MySQL Configuration file to host
+  template:
+    src: templates/my.cnf.j2
+    dest: /etc/my.cnf
+
+- name: Start and enable mariadb service
+  service:
+    name: mariadb
+    state: started
+    enabled: true
+
+- name: Start and enable firewalld service
+  service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Create a firewall rule to enable mysql_port
+  firewalld:
+    port: "{{ mysql_port }}/tcp"
+    zone: public
+    state: enabled
+    immediate: yes
+    permanent: yes
+
+- name: Create Application Database
+  mysql_db:
+    name="{{ dbname }}"
+    state=present
+
+- name: Create Application DB User
+  mysql_user:
+    name="{{ dbuser }}"
+    password="{{ dbpassword }}"
+    priv=*.*:ALL
+    host="{{ hostvars['lamp-web']['ansible_host'] }}"
+    state=present
+
+- name: Move db-load-script to db host
+  template:
+    src: templates/db-load-script.sql.j2
+    dest: /tmp/db-load-script.sql
+
+- name: Load Inventory Data
+  shell: mysql -f < /tmp/db-load-script.sql
